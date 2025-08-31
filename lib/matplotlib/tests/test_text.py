@@ -664,6 +664,51 @@ def test_annotation_update():
                            rtol=1e-6)
 
 
+def test_annotation_xy_mutable_array():
+    """
+    Test that modifying a mutable array passed as xy parameter to annotate
+    does not update the annotation position.
+    
+    This regression test ensures that annotation stores a copy of the xy
+    coordinates, not a reference to the original mutable array.
+    """
+    fig, ax = plt.subplots()
+    
+    # Test with numpy array
+    xy_array = np.array([1.0, 2.0])
+    original_xy = tuple(xy_array)
+    
+    # Create annotation with array
+    ann = ax.annotate('test', xy=xy_array, xytext=(3, 4))
+    
+    # Store the annotation's xy before modification
+    ann_xy_before = ann.xy
+    
+    # Modify the original array
+    xy_array[0] = 10.0
+    xy_array[1] = 20.0
+    
+    # The annotation's xy should NOT change
+    ann_xy_after = ann.xy
+    
+    # Test that annotation xy didn't change when original array was modified
+    assert ann_xy_before == ann_xy_after, (
+        f"Annotation xy changed from {ann_xy_before} to {ann_xy_after} "
+        f"when original array was modified"
+    )
+    
+    # Test that annotation xy equals the original values, not modified ones
+    assert ann.xy == original_xy, (
+        f"Annotation xy {ann.xy} should equal original xy {original_xy}, "
+        f"not modified array {tuple(xy_array)}"
+    )
+    
+    # Test that annotation xy is now a tuple (immutable)
+    assert isinstance(ann.xy, tuple), (
+        f"Annotation xy should be a tuple, got {type(ann.xy)}"
+    )
+
+
 @check_figures_equal(extensions=["png"])
 def test_annotation_units(fig_test, fig_ref):
     ax = fig_test.add_subplot()
